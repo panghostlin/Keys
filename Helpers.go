@@ -5,7 +5,7 @@
 ** @Filename:				Helpers.go
 **
 ** @Last modified by:		Tbouder
-** @Last modified time:		Wednesday 05 February 2020 - 13:08:22
+** @Last modified time:		Monday 10 February 2020 - 14:50:00
 *******************************************************************************/
 
 package			main
@@ -73,7 +73,8 @@ func	decryptWithPrivateKey(data []byte, key string, priv *rsa.PrivateKey) []byte
 	**	Now that we have the original cipher and the original IV, we will use
 	**	the private key to decrypt the AES key to perfom the file uncryption.
 	**************************************************************************/
-	hash, _ := blake2b.New512([]byte(os.Getenv("PRIV_KEY")))
+	privKey, _ := base64.RawStdEncoding.DecodeString(os.Getenv("PRIV_KEY"))
+	hash, _ := blake2b.New512([]byte(privKey))
 	secretKey, err := rsa.DecryptOAEP(hash, rand.Reader, priv, ciphertext, nil)
 	if (err != nil) {
 		logs.Error(err)
@@ -109,7 +110,8 @@ func	encryptWithPublicKey(data []byte, pub *rsa.PublicKey) ([]byte, string) {
 	**	We can now encrypt the secret key with the user public key.
 	**	This new cipher will only be decryptable by the user private key
 	**************************************************************************/
-	hash, _ := blake2b.New512([]byte(os.Getenv("PRIV_KEY")))
+	privKey, _ := base64.RawStdEncoding.DecodeString(os.Getenv("PRIV_KEY"))
+	hash, _ := blake2b.New512([]byte(privKey))
 	ciphertext, err := rsa.EncryptOAEP(hash, rand.Reader, pub, secretKey, nil)
 	if (err != nil) {
 		logs.Error(err)

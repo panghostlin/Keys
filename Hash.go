@@ -5,7 +5,7 @@
 ** @Filename:				Hash.go
 **
 ** @Last modified by:		Tbouder
-** @Last modified time:		Wednesday 05 February 2020 - 13:05:05
+** @Last modified time:		Monday 10 February 2020 - 14:39:36
 *******************************************************************************/
 
 package			main
@@ -13,7 +13,7 @@ package			main
 import			"os"
 import			"crypto/aes"
 import			"crypto/cipher"
-import			"encoding/hex"
+import			"encoding/base64"
 import			"golang.org/x/crypto/argon2"
 import			"github.com/microgolang/logs"
 
@@ -26,7 +26,7 @@ func	GeneratePasswordHash(password string) ([]byte, []byte, cipher.Block, error)
 	/**************************************************************************
 	**	Get the master key from the .env file
 	**************************************************************************/
-	MasterKey, err := hex.DecodeString(os.Getenv("MASTER_KEY"))
+	MasterKey, err := base64.RawStdEncoding.DecodeString(os.Getenv("MASTER_KEY"))
 	if (err != nil) {
 		logs.Error(err)
 		return nil, nil, nil, err
@@ -106,7 +106,7 @@ func	DecryptPasswordHash(argon2Hash, argon2IV, scryptHash, scryptIV []byte) ([]b
 	/**************************************************************************
 	**	Get the master key from the .env file
 	**************************************************************************/
-	MasterKey, err := hex.DecodeString(os.Getenv("MASTER_KEY"))
+	MasterKey, err := base64.RawStdEncoding.DecodeString(os.Getenv("MASTER_KEY"))
 	if (err != nil) {
 		logs.Error(err)
 		return nil, nil, err

@@ -5,7 +5,7 @@
 ** @Filename:				PemKeys.go
 **
 ** @Last modified by:		Tbouder
-** @Last modified time:		Wednesday 05 February 2020 - 13:03:45
+** @Last modified time:		Monday 10 February 2020 - 14:39:31
 *******************************************************************************/
 
 package			main
@@ -16,7 +16,7 @@ import			"crypto/aes"
 import			"crypto/rsa"
 import			"crypto/x509"
 import			"crypto/cipher"
-import			"encoding/hex"
+import			"encoding/base64"
 import			"encoding/pem"
 
 /******************************************************************************
@@ -134,7 +134,7 @@ func	EncryptPublicKey(publicKey []byte, secretKey string) ([]byte, []byte, error
 	/**************************************************************************
 	**	Decode the master key from hex to string
 	**************************************************************************/
-	secretKeyHex, err := hex.DecodeString(secretKey)
+	secretKeyHex, err := base64.RawStdEncoding.DecodeString(secretKey)
 	if (err != nil) {
 		logs.Error(err)
 		return nil, nil, err
@@ -180,7 +180,7 @@ func	DecryptPublicKey(publicKey, IV []byte, secretKey string) ([]byte, error) {
 	/**************************************************************************
 	**	Decode the master key from hex to string
 	**************************************************************************/
-	secretKeyHex, err := hex.DecodeString(secretKey)
+	secretKeyHex, err := base64.RawStdEncoding.DecodeString(secretKey)
 	if (err != nil) {
 		logs.Error(err)
 		return nil, err
