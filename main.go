@@ -5,7 +5,7 @@
 ** @Filename:				main.go
 **
 ** @Last modified by:		Tbouder
-** @Last modified time:		Monday 10 February 2020 - 11:22:52
+** @Last modified time:		Monday 10 February 2020 - 11:39:59
 *******************************************************************************/
 
 package			main
@@ -33,7 +33,23 @@ var		key = `/env/server.key`
 var		caCert = `/env/ca.crt`
 var		PGR *sql.DB
 
-func	connectToPostgre() {
+type	server struct {}
+type	MemberSecure struct {
+	Password			string //Symmetric encryption of the user password with the master key
+	PasswordArgon2Hash	[]byte
+	PasswordArgon2IV	[]byte
+	PasswordScryptHash	[]byte
+	PasswordScryptIV	[]byte
+}
+var (
+	ErrInvalidBlockSize		= errors.New("invalid blocksize")
+	ErrInvalidPKCS7Data		= errors.New("invalid PKCS7 data (empty or not padded)")
+	ErrInvalidPKCS7Padding	= errors.New("invalid padding on input")
+	ErrInvalidHash			= errors.New("the encoded hash is not in the correct format")
+    ErrIncompatibleVersion	= errors.New("incompatible version of argon2")
+)
+
+func	connectToDatabase() {
 	username := os.Getenv("POSTGRE_USERNAME")
 	password := os.Getenv("POSTGRE_PWD")
 	host := os.Getenv("POSTGRE_URI")
@@ -65,24 +81,7 @@ func	connectToPostgre() {
 
 	logs.Success(`Connected to DB - Localhost`)
 }
-
-type	server struct {keys.KeysServiceServer}
-type	MemberSecure struct {
-	Password			string //Symmetric encryption of the user password with the master key
-	PasswordArgon2Hash	[]byte
-	PasswordArgon2IV	[]byte
-	PasswordScryptHash	[]byte
-	PasswordScryptIV	[]byte
-}
-var (
-	ErrInvalidBlockSize		= errors.New("invalid blocksize")
-	ErrInvalidPKCS7Data		= errors.New("invalid PKCS7 data (empty or not padded)")
-	ErrInvalidPKCS7Padding	= errors.New("invalid padding on input")
-	ErrInvalidHash			= errors.New("the encoded hash is not in the correct format")
-    ErrIncompatibleVersion	= errors.New("incompatible version of argon2")
-)
-
-func	ServeKeysInsecure() {
+func	serveInsecureMicroservice() {
     lis, err := net.Listen(`tcp`, `:8011`)
     if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
@@ -96,13 +95,13 @@ func	ServeKeysInsecure() {
 		log.Fatalf("failed to serve: %v", err)
 	}
 }
-func	ServeKeys() {
+func	serveMicroservice() {
 	certificate, err := tls.LoadX509KeyPair(crt, key)
     if err != nil {
 		//Invalid Keys, should load as insecure
 		logs.Warning("could not load server key pair : " + err.Error())
 		logs.Warning("Using insecure connection")
-		ServeKeysInsecure()
+		serveInsecureMicroservice()
     }
 
     // Create a certificate pool from the certificate authority
@@ -143,21 +142,21 @@ func	ServeKeys() {
 	}
 }
 
-func PrintMemUsage() {
+func	printMemUsage() {
 	v, _ := mem.VirtualMemory()
 	fmt.Printf("Used: %v, Free:%v, UsedPercent:%f%%, GRoutines: %d\n",
 		v.Used, v.Free, v.UsedPercent, runtime.NumGoroutine())
 }
 
-func loop() {
+func	checkMemoryUsage() {
 	for {
 		time.Sleep(time.Second * 2)
-		PrintMemUsage()
+		printMemUsage()
 	}
 }
 
 func	main()	{
-	go loop()
-	connectToPostgre()
-	ServeKeys()
+	go checkMemoryUsage()
+	connectToDatabase()
+	serveMicroservice()
 }
