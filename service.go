@@ -5,7 +5,7 @@
 ** @Filename:				service.go
 **
 ** @Last modified by:		Tbouder
-** @Last modified time:		Friday 07 February 2020 - 12:30:27
+** @Last modified time:		Monday 10 February 2020 - 11:17:31
 *******************************************************************************/
 
 package			main
@@ -18,10 +18,11 @@ import (
 	"runtime/debug"
 	"encoding/base64"
 	"github.com/microgolang/logs"
+	"github.com/panghostlin/SDK/Keys"
 	P "github.com/microgolang/postgre"
 )
 
-func (s *server) CreateKeys(ctx context.Context, req *CreateKeysRequest) (*CreateKeysResponse, error) {
+func (s *server) CreateKeys(ctx context.Context, req *keys.CreateKeysRequest) (*keys.CreateKeysResponse, error) {
 	defer ctx.Done()
 	/**************************************************************************
 	**	We take the user password, we hash it with two different methods in
@@ -38,11 +39,11 @@ func (s *server) CreateKeys(ctx context.Context, req *CreateKeysRequest) (*Creat
 	plainArgon2Hash, plainScryptHash, block, err := GeneratePasswordHash(req.GetPassword())
 	argon2Hash, argon2IV, scryptHash, scryptIV, err := EncryptPasswordHash(plainArgon2Hash, plainScryptHash, block)
 	if (err != nil) {
-		return &CreateKeysResponse{Success: false}, nil
+		return &keys.CreateKeysResponse{Success: false}, nil
 	}
 	encryptionSalt, encryptionHash, err := GenerateKeyHash(req.GetPassword())
 	if (err != nil) {
-		return &CreateKeysResponse{Success: false}, nil
+		return &keys.CreateKeysResponse{Success: false}, nil
 	}
 
 	memberSecure := &MemberSecure{
@@ -75,13 +76,13 @@ func (s *server) CreateKeys(ctx context.Context, req *CreateKeysRequest) (*Creat
 	privateKey, err := generatePrivateKey(bitSize)
 	if (err != nil) {
 		logs.Error(err)
-		return &CreateKeysResponse{Success: false}, err
+		return &keys.CreateKeysResponse{Success: false}, err
 	}
 
 	publicKey, err := encodePublicKey(&privateKey.PublicKey)
 	if (err != nil) {
 		logs.Error(err)
-		return &CreateKeysResponse{Success: false}, err
+		return &keys.CreateKeysResponse{Success: false}, err
 	}
 
 	publicKeyBytes := []byte(publicKey)
@@ -90,13 +91,13 @@ func (s *server) CreateKeys(ctx context.Context, req *CreateKeysRequest) (*Creat
 	publicEncrypted, publicIV, err := EncryptPublicKey(publicKeyBytes, os.Getenv("MASTER_PUBLIC_KEY"))
 	if (err != nil) {
 		logs.Error(err)
-		return &CreateKeysResponse{Success: false}, err
+		return &keys.CreateKeysResponse{Success: false}, err
 	}
 
 	privateEncrypted, privateIV, privateSalt, err := EncryptPrivateKey(privateKeyBytes, encryptionHash)
 	if (err != nil) {
 		logs.Error(err)
-		return &CreateKeysResponse{Success: false}, err
+		return &keys.CreateKeysResponse{Success: false}, err
 	}
 
 	P.NewInsertor(PGR).Into(`keys`).
@@ -114,9 +115,9 @@ func (s *server) CreateKeys(ctx context.Context, req *CreateKeysRequest) (*Creat
 		P.S_InsertorWhere{Key: `PrivateKeySalt`, Value: base64.RawStdEncoding.EncodeToString(privateSalt)},
 	).Do()
 
-	return &CreateKeysResponse{Success: true, HashKey: base64.RawStdEncoding.EncodeToString(encryptionHash)}, nil
+	return &keys.CreateKeysResponse{Success: true, HashKey: base64.RawStdEncoding.EncodeToString(encryptionHash)}, nil
 }
-func (s *server) CheckPassword(ctx context.Context, req *CheckPasswordRequest) (*CheckPasswordResponse, error) {
+func (s *server) CheckPassword(ctx context.Context, req *keys.CheckPasswordRequest) (*keys.CheckPasswordResponse, error) {
 	var	B64PasswordArgon2Hash string
 	var	B64PasswordArgon2IV string
 	var	B64PasswordScryptHash string
@@ -130,7 +131,7 @@ func (s *server) CheckPassword(ctx context.Context, req *CheckPasswordRequest) (
 	One(&B64PasswordArgon2Hash, &B64PasswordArgon2IV, &B64PasswordScryptHash, &B64PasswordScryptIV, &B64EncryptionSalt)
 	if (err != nil) {
 		logs.Error(`Impossible to find member`, err)
-		return &CheckPasswordResponse{Success: false}, err
+		return &keys.CheckPasswordResponse{Success: false}, err
 	}
 
 	PasswordArgon2Hash, _ := base64.RawStdEncoding.DecodeString(B64PasswordArgon2Hash)
@@ -142,25 +143,25 @@ func (s *server) CheckPassword(ctx context.Context, req *CheckPasswordRequest) (
 	argon2Hash, scryptHash, err := DecryptPasswordHash(PasswordArgon2Hash, PasswordArgon2IV, PasswordScryptHash, PasswordScryptIV)
 	if (err != nil) {
 		logs.Error(`Impossible to decode member hash`, err)
-		return &CheckPasswordResponse{Success: false}, err
+		return &keys.CheckPasswordResponse{Success: false}, err
 	}
 
 	success, err := verifyMemberPasswordHash(req.GetPassword(), string(argon2Hash), string(scryptHash))
 	if (err != nil) {
 		logs.Error(`Impossible to verify hash`, err)
-		return &CheckPasswordResponse{Success: false}, err
+		return &keys.CheckPasswordResponse{Success: false}, err
 	}
 
 	encryptionHash := GetHashFromKey([]byte(req.GetPassword()), EncryptionSalt)
 	if (err != nil) {
-		return &CheckPasswordResponse{Success: false}, nil
+		return &keys.CheckPasswordResponse{Success: false}, nil
 	}
 
-	return &CheckPasswordResponse{Success: success, HashKey: base64.RawStdEncoding.EncodeToString(encryptionHash)}, nil
+	return &keys.CheckPasswordResponse{Success: success, HashKey: base64.RawStdEncoding.EncodeToString(encryptionHash)}, nil
 }
 
 
-func	EncryptPictureOnSuccess(req *EncryptPictureRequest) (*EncryptPictureResponse, error) {
+func	EncryptPictureOnSuccess(req *keys.EncryptPictureRequest) (*keys.EncryptPictureResponse, error) {
 	var	B64PublicKey string
 	var	B64PublicKeyIV string
 
@@ -172,7 +173,7 @@ func	EncryptPictureOnSuccess(req *EncryptPictureRequest) (*EncryptPictureRespons
 	One(&B64PublicKey, &B64PublicKeyIV)
 	if (err != nil) {
 		logs.Error(`Impossible to find member`, err)
-		return &EncryptPictureResponse{Success: false}, err
+		return &keys.EncryptPictureResponse{Success: false}, err
 	}
 
 	/**************************************************************************
@@ -183,7 +184,7 @@ func	EncryptPictureOnSuccess(req *EncryptPictureRequest) (*EncryptPictureRespons
 	publicDecrypted, err := DecryptPublicKey(PublicKey, PublicKeyIV, os.Getenv("MASTER_PUBLIC_KEY"))
 	if (err != nil) {
 		logs.Error(`Impossible to decrypt the public key`, err)
-		return &EncryptPictureResponse{Success: false}, err
+		return &keys.EncryptPictureResponse{Success: false}, err
 	}
 	publicDecoded := decodePublicKey(publicDecrypted)
 
@@ -196,10 +197,10 @@ func	EncryptPictureOnSuccess(req *EncryptPictureRequest) (*EncryptPictureRespons
 	**	4. Let's stream the encrypted data back
 	**************************************************************************/
 
-	return &EncryptPictureResponse{Success: true, Key: key, Chunk: encryptedData}, nil
+	return &keys.EncryptPictureResponse{Success: true, Key: key, Chunk: encryptedData}, nil
 }
-func	EncryptPictureReceiver(stream KeysService_EncryptPictureServer) (*EncryptPictureRequest, error) {
-	resp := &EncryptPictureRequest{}
+func	EncryptPictureReceiver(stream keys.KeysService_EncryptPictureServer) (*keys.EncryptPictureRequest, error) {
+	resp := &keys.EncryptPictureRequest{}
 
 	for {
 		select {
@@ -221,7 +222,7 @@ func	EncryptPictureReceiver(stream KeysService_EncryptPictureServer) (*EncryptPi
 		resp.MemberID = req.GetMemberID()
 	}
 }
-func	EncryptPictureSender(response *EncryptPictureResponse, stream KeysService_EncryptPictureServer) (bool, error) {
+func	EncryptPictureSender(response *keys.EncryptPictureResponse, stream keys.KeysService_EncryptPictureServer) (bool, error) {
 	chunkSize := 64 * 1024
 	fileSize := len(response.Chunk)
 
@@ -231,7 +232,7 @@ func	EncryptPictureSender(response *EncryptPictureResponse, stream KeysService_E
 			return false, err
 		}
 	} else {
-		chnk := &EncryptPictureResponse{Success: response.Success, Key: response.Key}
+		chnk := &keys.EncryptPictureResponse{Success: response.Success, Key: response.Key}
 		for currentByte := 0; currentByte < fileSize; currentByte += chunkSize {
 			if currentByte + chunkSize > fileSize {
 				chnk.Chunk = response.Chunk[currentByte:fileSize]
@@ -247,7 +248,7 @@ func	EncryptPictureSender(response *EncryptPictureResponse, stream KeysService_E
 
 	return true, nil
 }
-func (s *server) EncryptPicture(srv KeysService_EncryptPictureServer) error {
+func (s *server) EncryptPicture(srv keys.KeysService_EncryptPictureServer) error {
 	defer srv.Context().Done()
 
 	req, err := EncryptPictureReceiver(srv)
@@ -268,7 +269,7 @@ func (s *server) EncryptPicture(srv KeysService_EncryptPictureServer) error {
 	return nil
 }
 
-func	DecryptPictureOnSuccess(req *DecryptPictureRequest) (*DecryptPictureResponse, error) {
+func	DecryptPictureOnSuccess(req *keys.DecryptPictureRequest) (*keys.DecryptPictureResponse, error) {
 	var B64PrivateKey string
 	var B64PrivateKeySalt string
 	var B64PrivateKeyIV string
@@ -283,7 +284,7 @@ func	DecryptPictureOnSuccess(req *DecryptPictureRequest) (*DecryptPictureRespons
 	One(&B64PrivateKey, &B64PrivateKeySalt, &B64PrivateKeyIV, &B64EncryptionSalt)
 	if (err != nil) {
 		logs.Error(`Impossible to find member`, err)
-		return &DecryptPictureResponse{Success: false}, err
+		return &keys.DecryptPictureResponse{Success: false}, err
 	}
 
 	/**************************************************************************
@@ -292,7 +293,7 @@ func	DecryptPictureOnSuccess(req *DecryptPictureRequest) (*DecryptPictureRespons
 	decodedHashKey, err := base64.RawStdEncoding.DecodeString(req.GetHashKey())
 	if (err != nil) {
 		logs.Error(`Impossible to decode hashKey`, err)
-		return &DecryptPictureResponse{Success: false}, err
+		return &keys.DecryptPictureResponse{Success: false}, err
 	}
 
 	PrivateKey, _ := base64.RawStdEncoding.DecodeString(B64PrivateKey)
@@ -307,7 +308,7 @@ func	DecryptPictureOnSuccess(req *DecryptPictureRequest) (*DecryptPictureRespons
 
 	if (err != nil) {
 		logs.Error(`Impossible to decrypt the private key`, err)
-		return &DecryptPictureResponse{Success: false}, err
+		return &keys.DecryptPictureResponse{Success: false}, err
 	}
 	privateDecoded := decodePrivateKey(privateDecrypted)
 
@@ -319,10 +320,10 @@ func	DecryptPictureOnSuccess(req *DecryptPictureRequest) (*DecryptPictureRespons
 	/**************************************************************************
 	**	4. Let's stream the encrypted data back
 	**************************************************************************/
-	return &DecryptPictureResponse{Success: true, Chunk: decryptedData}, nil
+	return &keys.DecryptPictureResponse{Success: true, Chunk: decryptedData}, nil
 }
-func	DecryptPictureReceiver(stream KeysService_DecryptPictureServer) (*DecryptPictureRequest, error) {
-	resp := new(DecryptPictureRequest)
+func	DecryptPictureReceiver(stream keys.KeysService_DecryptPictureServer) (*keys.DecryptPictureRequest, error) {
+	resp := new(keys.DecryptPictureRequest)
 
 	for {
 		select {
@@ -347,7 +348,7 @@ func	DecryptPictureReceiver(stream KeysService_DecryptPictureServer) (*DecryptPi
 		resp.Key = req.GetKey()
 	}
 }
-func	DecryptPictureSender(response *DecryptPictureResponse, stream KeysService_DecryptPictureServer) (bool, error) {
+func	DecryptPictureSender(response *keys.DecryptPictureResponse, stream keys.KeysService_DecryptPictureServer) (bool, error) {
 	chunkSize := 64 * 1024
 	fileSize := len(response.Chunk)
 
@@ -357,7 +358,7 @@ func	DecryptPictureSender(response *DecryptPictureResponse, stream KeysService_D
 			return false, err
 		}
 	} else {
-		chnk := &DecryptPictureResponse{Success: response.Success}
+		chnk := &keys.DecryptPictureResponse{Success: response.Success}
 		
 		for currentByte := 0; currentByte < fileSize; currentByte += chunkSize {
 			if currentByte + chunkSize > fileSize {
@@ -378,7 +379,7 @@ func	DecryptPictureSender(response *DecryptPictureResponse, stream KeysService_D
 /******************************************************************************
 **	DecryptPicture
 **************************************************************************/	
-func (s *server) DecryptPicture(srv KeysService_DecryptPictureServer) error {
+func (s *server) DecryptPicture(srv keys.KeysService_DecryptPictureServer) error {
 	defer srv.Context().Done()
 	received, err := DecryptPictureReceiver(srv)
 	defer received.Reset()

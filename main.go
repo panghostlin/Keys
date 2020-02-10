@@ -5,7 +5,7 @@
 ** @Filename:				main.go
 **
 ** @Last modified by:		Tbouder
-** @Last modified time:		Sunday 09 February 2020 - 17:45:08
+** @Last modified time:		Monday 10 February 2020 - 11:22:52
 *******************************************************************************/
 
 package			main
@@ -18,7 +18,6 @@ import			"time"
 import			"errors"
 import			"runtime"
 import			"io/ioutil"
-import			"github.com/microgolang/logs"
 import			"google.golang.org/grpc"
 import			"google.golang.org/grpc/credentials"
 import			"crypto/x509"
@@ -26,11 +25,12 @@ import			"crypto/tls"
 import			"database/sql"
 import			_ "github.com/lib/pq"
 import			"github.com/shirou/gopsutil/mem"
+import			"github.com/microgolang/logs"
+import			"github.com/panghostlin/SDK/Keys"
 
-var crt = `/env/server.crt`
-var key = `/env/server.key`
-var caCert = `/env/ca.crt`
-
+var		crt = `/env/server.crt`
+var		key = `/env/server.key`
+var		caCert = `/env/ca.crt`
 var		PGR *sql.DB
 
 func	connectToPostgre() {
@@ -66,7 +66,7 @@ func	connectToPostgre() {
 	logs.Success(`Connected to DB - Localhost`)
 }
 
-type	server struct {KeysServiceServer}
+type	server struct {keys.KeysServiceServer}
 type	MemberSecure struct {
 	Password			string //Symmetric encryption of the user password with the master key
 	PasswordArgon2Hash	[]byte
@@ -82,10 +82,27 @@ var (
     ErrIncompatibleVersion	= errors.New("incompatible version of argon2")
 )
 
+func	ServeKeysInsecure() {
+    lis, err := net.Listen(`tcp`, `:8011`)
+    if err != nil {
+		log.Fatalf("Failed to listen: %v", err)
+    }
+
+	srv := grpc.NewServer(grpc.MaxConcurrentStreams(16))
+	keys.RegisterKeysServiceServer(srv, &server{})
+	logs.Success(`Running on port: :8011`)
+	if err := srv.Serve(lis); err != nil {
+		logs.Error(err)
+		log.Fatalf("failed to serve: %v", err)
+	}
+}
 func	ServeKeys() {
 	certificate, err := tls.LoadX509KeyPair(crt, key)
     if err != nil {
-        log.Fatalf("could not load server key pair: %s", err)
+		//Invalid Keys, should load as insecure
+		logs.Warning("could not load server key pair : " + err.Error())
+		logs.Warning("Using insecure connection")
+		ServeKeysInsecure()
     }
 
     // Create a certificate pool from the certificate authority
@@ -118,7 +135,7 @@ func	ServeKeys() {
 		grpc.Creds(creds),
 		grpc.MaxConcurrentStreams(16),
 	)
-	RegisterKeysServiceServer(srv, &server{})
+	keys.RegisterKeysServiceServer(srv, &server{})
 	logs.Success(`Running on port: :8011`)
 	if err := srv.Serve(lis); err != nil {
 		logs.Error(err)
@@ -133,7 +150,6 @@ func PrintMemUsage() {
 }
 
 func loop() {
-	// NewMonitor(2)
 	for {
 		time.Sleep(time.Second * 2)
 		PrintMemUsage()

@@ -1,4 +1,2 @@
-.git
-proto
-*.pb.go
 .env
+Keys
