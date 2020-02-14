@@ -27,6 +27,16 @@ github.com/microgolang/postgre v0.0.0-20200206183946-fb501c758fd4 h1:0ZMfkd6fyyX
 github.com/microgolang/postgre v0.0.0-20200206183946-fb501c758fd4/go.mod h1:fuv8Pa9s1hiQc5DB+hxQhd1wXQ8RT8eDCmXpCpSHi/I=
 github.com/panghostlin/SDK v0.0.0-20200209174925-bb70122b38f0 h1:RaDAP4x//XJXMOD/lqbbKxlC1hKqVu2TAjhqsci8ev8=
 github.com/panghostlin/SDK v0.0.0-20200209174925-bb70122b38f0/go.mod h1:QYErUWsn8/b+2xMsn2FOSXk4ZyomLYH8ytwSsmKMGa0=
+github.com/panghostlin/SDK v0.0.0-20200214155704-d98d6eec8146 h1:IK4Hf2vDO3OLDWUbe1ddoEP6+g2+Y8qBGiQa0JKQWt8=
+github.com/panghostlin/SDK v0.0.0-20200214155704-d98d6eec8146/go.mod h1:QYErUWsn8/b+2xMsn2FOSXk4ZyomLYH8ytwSsmKMGa0=
+github.com/panghostlin/SDK v0.0.0-20200214162231-307be9b0f2fd h1:7Go3koCowRrirq4Z+i9QJC2dqgj5no9W4hb/cLWb9VA=
+github.com/panghostlin/SDK v0.0.0-20200214162231-307be9b0f2fd/go.mod h1:QYErUWsn8/b+2xMsn2FOSXk4ZyomLYH8ytwSsmKMGa0=
+github.com/panghostlin/SDK v0.0.0-20200214170012-a16cff7b4a96 h1:026j3986O61OqkmPPSfF2/EBp+1a7EyhJjXqh9miqlU=
+github.com/panghostlin/SDK v0.0.0-20200214170012-a16cff7b4a96/go.mod h1:QYErUWsn8/b+2xMsn2FOSXk4ZyomLYH8ytwSsmKMGa0=
+github.com/panghostlin/SDK v0.0.0-20200214170140-671834b6f573 h1:exaPk4e9F1yQLns3X6WOew4mBup2Q7l4HxQClUy8bFE=
+github.com/panghostlin/SDK v0.0.0-20200214170140-671834b6f573/go.mod h1:QYErUWsn8/b+2xMsn2FOSXk4ZyomLYH8ytwSsmKMGa0=
+github.com/panghostlin/SDK v0.0.0-20200214170244-3f6c7a0969eb h1:3HiT2RPbPEkfx6gNtDzAlQHDHmU47myOZUVYgLrQ3GE=
+github.com/panghostlin/SDK v0.0.0-20200214170244-3f6c7a0969eb/go.mod h1:QYErUWsn8/b+2xMsn2FOSXk4ZyomLYH8ytwSsmKMGa0=
 github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4/go.mod h1:xMI15A0UPsDsEKsMN9yxemIoYk6Tm2C1GtYGdfGttqA=
 github.com/shirou/gopsutil v2.20.1+incompatible h1:oIq9Cq4i84Hk8uQAUOG3eNdI/29hBawGrD5YRl6JRDY=
 github.com/shirou/gopsutil v2.20.1+incompatible/go.mod h1:5b4v6he4MtMOwMlS0TUMTu2PcXUg8+E1lC7eC3UO/RA=
