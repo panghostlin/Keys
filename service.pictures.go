@@ -5,7 +5,7 @@
 ** @Filename:				service.go
 **
 ** @Last modified by:		Tbouder
-** @Last modified time:		Friday 14 February 2020 - 18:05:02
+** @Last modified time:		Saturday 15 February 2020 - 14:08:18
 *******************************************************************************/
 
 package			main
@@ -245,7 +245,6 @@ func	DecryptPictureSender(response *keys.DecryptPictureResponse, stream keys.Key
 func (s *server) DecryptPicture(srv keys.KeysService_DecryptPictureServer) error {
 	defer srv.Context().Done()
 	received, err := DecryptPictureReceiver(srv)
-	defer received.Reset()
 
 	if (err != nil) {
 		return err
@@ -256,7 +255,6 @@ func (s *server) DecryptPicture(srv keys.KeysService_DecryptPictureServer) error
 	**	data, and streamReceiver is the new responder.
 	**************************************************************************/	
 	response , err := DecryptPictureOnSuccess(received)
-	defer response.Reset()
 	if (err != nil) {
 		return err
 	}
