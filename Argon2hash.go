@@ -5,7 +5,7 @@
 ** @Filename:				Argon2hash.go
 **
 ** @Last modified by:		Tbouder
-** @Last modified time:		Wednesday 05 February 2020 - 15:03:41
+** @Last modified time:		Saturday 15 February 2020 - 15:04:54
 *******************************************************************************/
 
 package			main
@@ -202,6 +202,6 @@ func	hashMemberPassword(password string) ([]byte, []byte, error) {
 	}
 	return []byte(encodedArgon2Hash), []byte(encodedScryptHash), nil
 }
-func    verifyMemberPasswordHash(password, argon2Hash, scryptHash string) (bool, error) {
-	return argon2Match(password, argon2Hash) && scryptMatch(password, scryptHash), nil
+func    verifyMemberPasswordHash(password, argon2Hash, scryptHash string) (bool) {
+	return argon2Match(password, argon2Hash) && scryptMatch(password, scryptHash)
 }

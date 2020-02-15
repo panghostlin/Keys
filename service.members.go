@@ -5,7 +5,7 @@
 ** @Filename:				service.go
 **
 ** @Last modified by:		Tbouder
-** @Last modified time:		Friday 14 February 2020 - 18:08:00
+** @Last modified time:		Saturday 15 February 2020 - 15:05:59
 *******************************************************************************/
 
 package			main
@@ -13,6 +13,7 @@ package			main
 import (
 	"os"
 	"context"
+	"errors"
 	"encoding/base64"
 	"runtime/debug"
 	"github.com/microgolang/logs"
@@ -144,16 +145,13 @@ func (s *server) CheckPassword(ctx context.Context, req *keys.CheckPasswordReque
 		return &keys.CheckPasswordResponse{}, err
 	}
 
-	success, err := verifyMemberPasswordHash(req.GetPassword(), string(argon2Hash), string(scryptHash))
-	if (err != nil || success == false) {
-		logs.Error(`Impossible to verify hash`, err)
-		return &keys.CheckPasswordResponse{}, err
+	hashMatches := verifyMemberPasswordHash(req.GetPassword(), string(argon2Hash), string(scryptHash))
+	if (!hashMatches) {
+		logs.Error(`Impossible to verify hash`)
+		return &keys.CheckPasswordResponse{}, errors.New(`The hashes does not matches`)
 	}
 
 	encryptionHash := GetHashFromKey([]byte(req.GetPassword()), EncryptionSalt)
-	if (err != nil) {
-		return &keys.CheckPasswordResponse{}, err
-	}
 
 	return &keys.CheckPasswordResponse{HashKey: base64.RawStdEncoding.EncodeToString(encryptionHash)}, nil
 }
